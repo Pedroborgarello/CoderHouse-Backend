@@ -1,5 +1,5 @@
 const express = require('express');
-
+const { Server: IOServer } = require('socket.io');
 const app = express();
 const PORT = process.env.PORT||8080;
 
@@ -12,9 +12,22 @@ const server = app.listen(PORT, () => {
 });
 
 app.use(express.static('public'));
+const io = new IOServer(server);
 
 app.set('views', './views');
 app.set('view engine', 'hbs');
+
+let messages = [];
+
+io.on('connection', socket => {
+    console.log("connected client " + socket.id);
+    socket.emit('messagelog', messages);
+    socket.emit('welcome', 'Welcome to chat with sockets');
+    socket.on('message', data => {
+        messages.push(data);
+        io.emit('messagelog', messages);
+    })
+})
 
 const Container = require('./container');
 const container = new Container();
